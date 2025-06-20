@@ -222,6 +222,46 @@ class Bullet(pygame.sprite.Sprite):
 	def draw(win):
 		win.blit(self.image, self.rect)
 
+class Explosion(pygame.sprite.Sprite):
+	def __init__(self, x, y, type_):
+		super(Explosion, self).__init__()
+
+
+		self.img_list = []
+		if type_ == 1:
+			self.length = 3
+		elif type_ == 2:
+			self.length = 8
+
+		for i in range(self.length):
+			img = pygame.image.load(f'Assets/Explosion{type_}/{i+1}.png')
+			w, h = img.get_size()
+			width = int(w * 0.40)
+			height = int(w * 0.40)
+			img = pygame.transform.scale(img, (width, height))
+			self.img_list.append(img)
+
+		self.index = 0
+		self.image = self.img_list[self.index]
+		self.rect = self.image.get_rect(center=(x, y))
+
+		self.counter = 0
+
+	def update(self):
+		self.counter += 1
+		if self.counter >= 7:
+			self.index += 1
+			if self.index >= self.length:
+				self.kill()
+			else:
+				self.image = self.img_list[self.index]
+				self.counter = 0
+
+		
+	def draw(win):
+		win.blit(self.image, self.rect)
+
+
 
 class Fuel(pygame.sprite.Sprite):
 	def __init__(self, x, y):
