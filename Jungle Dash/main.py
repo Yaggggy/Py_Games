@@ -96,8 +96,6 @@ while running:
 	for group in groups:
 		group.draw(win)
 
-	# drawing grid
-	# draw_lines(win)
 
 	if main_menu:
 		win.blit(jungle_dash, (WIDTH//2 - WIDTH//8, HEIGHT//4))
