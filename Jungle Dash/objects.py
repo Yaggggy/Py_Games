@@ -296,3 +296,250 @@ class Player:
 		return game_over, level_won
 
 
+	def reset(self, win, pos, world, groups):
+		x, y  = pos
+		self.win = win
+		self.world = world
+		self.groups = groups
+
+		self.img_right = []
+		self.img_left = []
+		self.index = 0
+		self.counter = 0
+
+		for i in range(6):
+			img = pygame.image.load(f'player/walk{i+1}.png')
+			img_right = pygame.transform.scale(img, (45,70))
+			img_left = pygame.transform.flip(img_right, True, False)
+			self.img_right.append(img_right)
+			self.img_left.append(img_left)
+
+		self.image = self.img_right[self.index]
+		self.rect = self.image.get_rect()
+		self.rect.x = x
+		self.rect.y = y
+		self.width = self.image.get_width()
+		self.height = self.image.get_height()
+		self.direction = 1
+		self.vel_y = 0
+		self.jumping = False
+		self.in_air = True
+
+class MovingPlatform(pygame.sprite.Sprite):
+	def __init__(self, type_, x, y):
+		super(MovingPlatform, self).__init__()
+
+		img = pygame.image.load('assets/moving.png')
+		self.image = pygame.transform.scale(img, (tile_size, tile_size // 2))
+		self.rect = self.image.get_rect()
+		self.rect.x = x
+		self.rect.y = y
+
+		direction = random.choice([-1,1])
+		self.move_direction = direction
+		self.move_counter = 0
+		self.move_x = 0
+		self.move_y = 0
+
+		if type_ == 'side':
+			self.move_x = 1
+		elif type_ == 'up':
+			self.move_y = 1
+
+	def update(self):
+		self.rect.x += self.move_direction * self.move_x
+		self.rect.y += self.move_direction * self.move_y
+		self.move_counter += 1
+		if abs(self.move_counter) >= 50:
+			self.move_direction *= -1
+			self.move_counter *= -1
+
+class Bridge(pygame.sprite.Sprite):
+	def __init__(self, x, y):
+		super(Bridge, self).__init__()
+
+		img = pygame.image.load('tiles/28.png')
+		self.image = pygame.transform.scale(img, (5*tile_size + 20, tile_size))
+		self.rect = self.image.get_rect()
+		self.rect.x = x
+		self.rect.y = y
+
+
+class Fluid(pygame.sprite.Sprite):
+	def __init__(self, type_, x, y):
+		super(Fluid, self).__init__()
+
+		if type_ == 'water_flow':
+			img = pygame.image.load('tiles/19.png')
+			self.image = pygame.transform.scale(img, (tile_size, tile_size // 2 + tile_size // 4))
+		if type_ == 'water_still':
+			img = pygame.image.load('tiles/20.png')
+			self.image = pygame.transform.scale(img, (tile_size, tile_size))
+		elif type_ == 'lava_flow':
+			img = pygame.image.load('tiles/15.png')
+			self.image = pygame.transform.scale(img, (tile_size, tile_size // 2 + tile_size // 4))
+		elif type_ == 'lava_still':
+			img = pygame.image.load('tiles/16.png')
+			self.image = pygame.transform.scale(img, (tile_size, tile_size))
+
+		
+		self.rect = self.image.get_rect()
+		self.rect.x = x
+		self.rect.y = y
+
+class ExitGate(pygame.sprite.Sprite):
+	def __init__(self, x, y):
+		super(ExitGate, self).__init__()
+		
+		img_list = [f'assets/gate{i+1}.png' for i in range(4)]
+		self.gate_open = pygame.image.load('assets/gate5.png')
+		self.image = pygame.image.load(random.choice(img_list))
+		self.rect = self.image.get_rect()
+		self.rect.x = x
+		self.rect.y = y
+		self.width = self.image.get_width()
+		self.height = self.image.get_height()
+
+	def update(self, player):
+		if player.rect.colliderect(self.rect.x , self.rect.y, self.width, self.height):
+			self.image = self.gate_open
+
+
+class Forest(pygame.sprite.Sprite):
+	def __init__(self, type_, x, y):
+		super(Forest, self).__init__()
+
+		if type_ == 'bush':
+			img = pygame.image.load('tiles/14.png')
+			self.image = pygame.transform.scale(img, (tile_size, int(tile_size * 0.50)))
+
+		if type_ == 'tree':
+			img = pygame.image.load('tiles/21.png')
+			self.image = pygame.transform.scale(img, (3*tile_size, 3 * tile_size))
+
+		if type_ == 'mushroom':
+			img = pygame.image.load('tiles/22.png')
+			self.image = pygame.transform.scale(img, (int(tile_size * 0.80), int(tile_size * 0.80)))
+
+		if type_ == 'flower':
+			img = pygame.image.load('tiles/27.png')
+			self.image = pygame.transform.scale(img, (2*tile_size, tile_size))
+
+		self.rect = self.image.get_rect()
+		self.rect.x = x
+		self.rect.y = y
+
+class Diamond(pygame.sprite.Sprite):
+	def __init__(self, x, y):
+		super(Diamond, self).__init__()
+
+		img_list = [f'assets/d{i+1}.png' for i in range(4)]
+		img = pygame.image.load(random.choice(img_list))
+		self.image = pygame.transform.scale(img, (tile_size, tile_size))
+		self.rect = self.image.get_rect()
+		self.rect.x = x
+		self.rect.y = y
+
+
+class Bee(pygame.sprite.Sprite):
+	def __init__(self, x, y):
+		super(Bee, self).__init__()
+
+		img = pygame.image.load('tiles/23.png')
+		self.img_left = pygame.transform.scale(img, (48,48))
+		self.img_right = pygame.transform.flip(self.img_left, True, False)
+		self.image = self.img_left
+		self.rect = self.image.get_rect()
+		self.rect.x = x
+		self.rect.y = y
+
+		self.pos = self.rect.y
+		self.dx = 3
+
+	def update(self, player):
+		if self.rect.x >= player.rect.x:
+			self.image = self.img_left
+		else:
+			self.image = self.img_right
+
+		if self.rect.y >= self.pos:
+			self.dx *= -1
+		if self.rect.y <= self.pos - tile_size * 3:
+			self.dx *= -1
+
+		self.rect.y += self.dx
+
+class Slime(pygame.sprite.Sprite):
+	def __init__(self, x, y):
+		super(Slime, self).__init__()
+
+		img = pygame.image.load('tiles/29.png')
+		self.img_left = pygame.transform.scale(img, (int(1.2*tile_size), tile_size//2 + tile_size//4))
+		self.img_right = pygame.transform.flip(self.img_left, True, False)
+		self.imlist = [self.img_left, self.img_right]
+		self.index = 0
+
+		self.image = self.imlist[self.index]
+		self.rect = self.image.get_rect()
+		self.rect.x = x
+		self.rect.y = y
+
+		self.move_direction = -1
+		self.move_counter = 0
+
+	def update(self, player):
+		self.rect.x += self.move_direction
+		self.move_counter += 1
+		if abs(self.move_counter) >= 50:
+			self.index = (self.index + 1) % 2
+			self.image = self.imlist[self.index]
+			self.move_direction *= -1
+			self.move_counter *= -1
+
+class Button(pygame.sprite.Sprite):
+	def __init__(self, img, scale, x, y):
+		super(Button, self).__init__()
+
+		self.image = pygame.transform.scale(img, scale)
+		self.rect = self.image.get_rect()
+		self.rect.x = x
+		self.rect.y = y
+
+		self.clicked = False
+
+	def draw(self, win):
+		action = False
+		pos = pygame.mouse.get_pos()
+		if self.rect.collidepoint(pos):
+			if pygame.mouse.get_pressed()[0] and not self.clicked:
+				action = True
+				self.clicked = True
+
+			if not pygame.mouse.get_pressed()[0]:
+				self.clicked = False
+
+		win.blit(self.image, self.rect)
+		return action
+
+
+# -------------------------------------------------------------------------------------------------
+#											 Custom Functions
+def draw_lines(win):
+	for row in range(HEIGHT // tile_size + 1):
+		pygame.draw.line(win, WHITE, (0, tile_size*row), (WIDTH, tile_size*row), 2)
+	for col in range(WIDTH // tile_size):
+		pygame.draw.line(win, WHITE, (tile_size*col, 0), (tile_size*col, HEIGHT), 2)
+
+def load_level(level):
+	game_level = f'levels/level{level}_data'
+	data = None
+	if os.path.exists(game_level):
+		f = open(game_level, 'rb')
+		data = pickle.load(f)
+		f.close()
+
+	return data
+
+def draw_text(win, text, pos):
+	img = score_font.render(text, True, BLUE)
+	win.blit(img, pos)
